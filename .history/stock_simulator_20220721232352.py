@@ -1,3 +1,4 @@
+from turtle import color
 from get_parameters import event_mapping_dict, Wakron_macro, Wakron_micro
 from typing import Optional
 import numpy as np
@@ -25,7 +26,7 @@ class StockSimulator:
 		initial_price: float,
 		original_price: float,
 		macro_params: dict,
-		micro_params: object,
+		micro_params: dict,
 		price_range: Optional[float] = 10,
 		minimum_simulation_tick: Optional[float] = 0.01,
 		minimum_price_unit: Optional[float] = 0.2,
@@ -41,9 +42,8 @@ class StockSimulator:
 			The orginal initial price in history.
 		macro_params: dict,
 			Imported from get_paramters.py file, containers the required parameters for specific macro scenario.
-		micro_params: function,
+		micro_params: dict,
 			Imported from get_paramters.py file, containers the required parameters for Death & Birth Process.
-			The function returns a dictionary.
 		price_range: float, default=10, Optional,
 			The total number of prices documented during the Death & Birth Process.
 		minimum_simulation_tick: float, default=0.01, Optional,
@@ -60,7 +60,7 @@ class StockSimulator:
 		#price storage
 		self.original_price = original_price
 		self.initial_price = initial_price
-		self.price = original_price
+		self.price = initial_price
 		self.second_price = initial_price
 		self.price_list = []
 		self.second_price_lst = []
@@ -68,7 +68,7 @@ class StockSimulator:
 		#price bound preparation
 		self.price_range = price_range
 		self.upper = self.second_price+self.price_range
-		if self.price >= self.price_range:
+		if self.comp_price >= self.price_range:
 			self.lower = self.second_price-self.price_range
 		else:
 			self.lower = 0
@@ -133,7 +133,7 @@ class StockSimulator:
 		theta_lst = self.macro_params["theta"]
 		time_length = self.macro_params["time"]
 
-		for index in range(time_length):
+		for index in range(len(time_length)):
 			mu = mu_lst[index]
 			theta = theta_lst[index]
 			sigma = sigma_lst[index]
@@ -147,11 +147,10 @@ class StockSimulator:
 			In this case, a Geometric Brownian Motion is used.
 			Two parameters are required for this function, which are mu and sigma.
 		"""
-		dt = 1/(60*60)
-		tmp_bm = np.random.normal(0, np.sqrt(dt))
-		next_price = self.second_price + mu * self.second_price * dt + sigma * np.sqrt(self.second_price) * tmp_bm
-		return next_price
-
+		tmp_bm = np.random.normal(0, self.minimum_second_unit)
+		simulated_price = self.second_price + mu * self.second_price * self.minimum_price_unit + sigma * np.sqrt(self.second_price) * tmp_bm
+		return simulated_price
+	
 	def loop_per_second(self):
 		"""
 			This function calculates the per-second stock price.
@@ -161,7 +160,6 @@ class StockSimulator:
 			Thus we take the derivatives between 10 points and apply random Brownian Motion based on the slope.
 			It follows the real-world trend since most inner-day stock price movements are highly irregular and volatile.
 		"""
-		self.price_loop()
 		adjust_factor = self.initial_price/self.original_price
 		adjusted_price = [i*adjust_factor for i in self.price_list]
 
@@ -176,33 +174,24 @@ class StockSimulator:
 			drift = drift[1:]['one_day_price'].tolist()
 			        
 			initial_price = one_day[0]
-
-			dt = 1/(60*60)
-			num = int(9/dt) #9 denotes the market opens for 9 hours per day.
+			num = int(9/self.minimum_second_unit) #9 denotes the market opens for 9 hours per day.
+			initial_price = one_day[0]
 
 			daily_price = [initial_price]
 
 			for inx in range(num):
-				mu_tmp = drift[int(inx*dt)]
-				sigma = 0.05
-
-				if inx == (num-1):
-					next_price = one_day[-1]
-				else:
-					next_price = self.per_second_price(mu_tmp, sigma)
-				
-				self.price_change = (next_price-self.second_price)/self.second_price
-				self.micro_params = micro_params(self.total_index, self.price_change)
-				difference = self.micro_params["lamb"]-self.micro_params["mu"]
-
-				self.second_price = next_price + difference
-				daily_price.append(self.second_price)
-
+				mu_tmp = drift[int(inx*self.minimum_second_unit)]
+				sigma = 0.1
+				next_price = self.per_second_price(mu_tmp, sigma)
+				self.second_price = next_price
+				print(next_price)
+				daily_price.append(next_price)
+			
 			daily_price[-1] = one_day[-1]
 			self.second_price_lst += daily_price
 			price_lst += daily_price
-
-		return price_lst
+		
+		return (price_lst)
 
 #Checkpoint: SDE is done.
 #Micro algorithm below.
@@ -216,8 +205,8 @@ class StockSimulator:
 		_initial_trading_population is an internal attribute in StockSimulator.
 		It helps to initialize the supply and demand for stock prices through normal distribution.
 		It obeys the belief that closer to the current price, the supply and demand will both increase.
-		If the randomized price is greater than price, people tend to sell (marks as +).
-		If the randomized price is less than price, people tend to buy (marks as -).
+		If the randomized price is greater than comp_price, people tend to sell (marks as +).
+		If the randomized price is less than comp_price, people tend to buy (marks as -).
 
 		Parameters
 		----------
@@ -336,7 +325,7 @@ class StockSimulator:
 
 initial_price = 56.67 #randomly selected value for testing
 original_price = 38.23 #start value for FaceBook IPO event
-macro_params = Wakron_macro["IPO"]()
+macro_params = Wakron_macro["IPO"]
 micro_params = Wakron_micro["IPO"]
 
 simulator = StockSimulator(initial_price, original_price, macro_params, micro_params)

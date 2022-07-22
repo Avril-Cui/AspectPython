@@ -132,12 +132,15 @@ class StockSimulator:
 		sigma_lst = self.macro_params["sigma"]
 		theta_lst = self.macro_params["theta"]
 		time_length = self.macro_params["time"]
+		print(mu_lst[152])
 
 		for index in range(time_length):
 			mu = mu_lst[index]
 			theta = theta_lst[index]
 			sigma = sigma_lst[index]
 			next_price = self.ontk_price(theta, mu, sigma)
+			if next_price > 53:
+				print(index)
 			self.price = next_price
 			self.price_list.append(next_price)
 
@@ -166,6 +169,7 @@ class StockSimulator:
 		adjusted_price = [i*adjust_factor for i in self.price_list]
 
 		split = [adjusted_price[i:i+10] for i in range(0, len(adjusted_price), 10)]
+		print(split[14], split[15])
 
 		price_lst = []
 		
@@ -187,22 +191,17 @@ class StockSimulator:
 				sigma = 0.05
 
 				if inx == (num-1):
-					next_price = one_day[-1]
+					self.second_price = one_day[-1]
 				else:
 					next_price = self.per_second_price(mu_tmp, sigma)
-				
-				self.price_change = (next_price-self.second_price)/self.second_price
-				self.micro_params = micro_params(self.total_index, self.price_change)
-				difference = self.micro_params["lamb"]-self.micro_params["mu"]
-
-				self.second_price = next_price + difference
+					self.second_price = next_price
 				daily_price.append(self.second_price)
 
 			daily_price[-1] = one_day[-1]
 			self.second_price_lst += daily_price
 			price_lst += daily_price
-
-		return price_lst
+			# print(daily_price)
+		return price_lst, self.price_list
 
 #Checkpoint: SDE is done.
 #Micro algorithm below.

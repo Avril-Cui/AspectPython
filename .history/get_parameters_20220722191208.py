@@ -121,7 +121,7 @@ def wrkn_2012_IPO_micro(
 		Since we do not have any user data now, the function assumes a static number for simplicity purpose.
 	"""
 	adjust_number = 1/(total_index)
-	change = price_change * 0.65
+	change = price_change
 	scale_lamb = 110
 	scale_mu = 110
 	parameter_dict = {}

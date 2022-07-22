@@ -60,7 +60,7 @@ class StockSimulator:
 		#price storage
 		self.original_price = original_price
 		self.initial_price = initial_price
-		self.price = original_price
+		self.price = initial_price
 		self.second_price = initial_price
 		self.price_list = []
 		self.second_price_lst = []
@@ -187,21 +187,15 @@ class StockSimulator:
 				sigma = 0.05
 
 				if inx == (num-1):
-					next_price = one_day[-1]
+					self.second_price = one_day[-1]
 				else:
 					next_price = self.per_second_price(mu_tmp, sigma)
-				
-				self.price_change = (next_price-self.second_price)/self.second_price
-				self.micro_params = micro_params(self.total_index, self.price_change)
-				difference = self.micro_params["lamb"]-self.micro_params["mu"]
-
-				self.second_price = next_price + difference
+					self.second_price = next_price
 				daily_price.append(self.second_price)
 
 			daily_price[-1] = one_day[-1]
 			self.second_price_lst += daily_price
 			price_lst += daily_price
-
 		return price_lst
 
 #Checkpoint: SDE is done.

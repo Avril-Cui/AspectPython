@@ -1,11 +1,3 @@
-"""
-    This script is an experiment that connect different events together.
-    It is used for final launch (output the final csv and prepare for the front-end).
-    [NOT THAT IMPORTANT!]
-"""
-
-
-
 import pandas_datareader as web
 import matplotlib.pyplot as plt 
 import numpy as np

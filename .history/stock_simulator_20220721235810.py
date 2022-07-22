@@ -1,3 +1,4 @@
+from turtle import color
 from get_parameters import event_mapping_dict, Wakron_macro, Wakron_micro
 from typing import Optional
 import numpy as np
@@ -60,7 +61,7 @@ class StockSimulator:
 		#price storage
 		self.original_price = original_price
 		self.initial_price = initial_price
-		self.price = original_price
+		self.price = initial_price
 		self.second_price = initial_price
 		self.price_list = []
 		self.second_price_lst = []
@@ -147,11 +148,10 @@ class StockSimulator:
 			In this case, a Geometric Brownian Motion is used.
 			Two parameters are required for this function, which are mu and sigma.
 		"""
-		dt = 1/(60*60)
-		tmp_bm = np.random.normal(0, np.sqrt(dt))
-		next_price = self.second_price + mu * self.second_price * dt + sigma * np.sqrt(self.second_price) * tmp_bm
-		return next_price
-
+		tmp_bm = np.random.normal(0, self.minimum_second_unit)
+		simulated_price = self.second_price + mu * self.second_price * self.minimum_price_unit + sigma * np.sqrt(self.second_price) * tmp_bm
+		return simulated_price
+	
 	def loop_per_second(self):
 		"""
 			This function calculates the per-second stock price.
@@ -167,6 +167,7 @@ class StockSimulator:
 
 		split = [adjusted_price[i:i+10] for i in range(0, len(adjusted_price), 10)]
 
+
 		price_lst = []
 		
 		for index in range(len(split[:-1])):
@@ -176,33 +177,23 @@ class StockSimulator:
 			drift = drift[1:]['one_day_price'].tolist()
 			        
 			initial_price = one_day[0]
-
-			dt = 1/(60*60)
-			num = int(9/dt) #9 denotes the market opens for 9 hours per day.
+			num = int(9/self.minimum_second_unit) #9 denotes the market opens for 9 hours per day.
+			initial_price = one_day[0]
 
 			daily_price = [initial_price]
 
 			for inx in range(num):
-				mu_tmp = drift[int(inx*dt)]
+				mu_tmp = drift[int(inx*self.minimum_second_unit)] * 0.1
 				sigma = 0.05
-
-				if inx == (num-1):
-					next_price = one_day[-1]
-				else:
-					next_price = self.per_second_price(mu_tmp, sigma)
-				
-				self.price_change = (next_price-self.second_price)/self.second_price
-				self.micro_params = micro_params(self.total_index, self.price_change)
-				difference = self.micro_params["lamb"]-self.micro_params["mu"]
-
-				self.second_price = next_price + difference
-				daily_price.append(self.second_price)
-
+				next_price = self.per_second_price(mu_tmp, sigma)
+				self.second_price = next_price
+				daily_price.append(next_price)
+				print(next_price)
+			
 			daily_price[-1] = one_day[-1]
 			self.second_price_lst += daily_price
 			price_lst += daily_price
-
-		return price_lst
+		return (price_lst)
 
 #Checkpoint: SDE is done.
 #Micro algorithm below.
@@ -342,7 +333,7 @@ micro_params = Wakron_micro["IPO"]
 simulator = StockSimulator(initial_price, original_price, macro_params, micro_params)
 second_price_lst = simulator.loop_per_second()
 
-x_value = range(0, len(second_price_lst), 1)
-plt.figure(figsize=(10, 6))
-plt.plot(x_value, second_price_lst, label="Per Second Simulated Price Plot", color="orange", alpha = 0.5, linewidth = 1.5)
-plt.show()
+# x_value = range(0, len(second_price_lst), 1)
+# plt.figure(figsize=(10, 6))
+# plt.plot(x_value, second_price_lst, label="Per Second Simulated Price Plot", color="orange", alpha = 0.5, linewidth = 1.5)
+# plt.show()

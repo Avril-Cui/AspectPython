@@ -194,8 +194,8 @@ class StockSimulator:
 				self.price_change = (next_price-self.second_price)/self.second_price
 				self.micro_params = micro_params(self.total_index, self.price_change)
 				difference = self.micro_params["lamb"]-self.micro_params["mu"]
-
-				self.second_price = next_price + difference
+				print(difference * 0.1)
+				self.second_price = next_price
 				daily_price.append(self.second_price)
 
 			daily_price[-1] = one_day[-1]

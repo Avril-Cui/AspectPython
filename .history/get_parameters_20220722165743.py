@@ -83,21 +83,24 @@ def wrkn_2012_IPO_macro():
 	sigma_lst = []
 	mu_lst = []
 
-	for index in range(len(sampling_price_list)):
-		X_t = np.array(sampling_price_list[index])
-		y = np.diff(X_t)
-		X = X_t[:-1].reshape(-1, 1)
-		reg = LinearRegression(fit_intercept=True)
-		reg.fit(X, y)
-		theta = -reg.coef_[0]
-		mu = reg.intercept_ / theta
-		y_hat = reg.predict(X)
-		sigma = np.std(y - y_hat)
-		#The company weight in respect with index weight is assumed to be a fixed number in this case.
-		company_weight = 0.99 #IPO is a highly company-driven case, so the weight is high.
-		theta_lst.append(theta * company_weight + index_theta[index] * (1-company_weight))
-		mu_lst.append(mu)
-		sigma_lst.append(sigma)
+	print(sampling_price_list[152])
+
+	# for index in range(len(sampling_price_list)):
+	X_t = np.array(sampling_price_list[152])
+	y = np.diff(X_t)
+	X = X_t[:-1].reshape(-1, 1)
+	reg = LinearRegression(fit_intercept=True)
+	reg.fit(X, y)
+	theta = -reg.coef_[0]
+	print(-reg.coef_[0])
+	mu = reg.intercept_ / -reg.coef_[0]
+	y_hat = reg.predict(X)
+	sigma = np.std(y - y_hat)
+	#The company weight in respect with index weight is assumed to be a fixed number in this case.
+	company_weight = 0.95 #IPO is a highly company-driven case, so the weight is high.
+	theta_lst.append(theta * company_weight + index_theta[index] * (1-company_weight))
+	mu_lst.append(mu)
+	sigma_lst.append(sigma)
 
 
 	parameter_dict = {}
@@ -105,6 +108,7 @@ def wrkn_2012_IPO_macro():
 	parameter_dict['sigma'] = sigma_lst
 	parameter_dict['theta'] = theta_lst
 	parameter_dict['time'] = len(sampling_price_list)
+	print(parameter_dict["theta"])
 
 	return parameter_dict
 
@@ -121,16 +125,15 @@ def wrkn_2012_IPO_micro(
 		Since we do not have any user data now, the function assumes a static number for simplicity purpose.
 	"""
 	adjust_number = 1/(total_index)
-	change = price_change * 0.65
-	scale_lamb = 110
-	scale_mu = 110
+	change = price_change*20
+	scale = 110
 	parameter_dict = {}
-	parameter_dict['lamb_low'] = [scale_lamb*(element*adjust_number) + change for element in range(total_index)]
-	parameter_dict['mu_low'] = [scale_mu*(element*adjust_number) - change for element in range(total_index)]
+	parameter_dict['lamb_low'] = [scale*(element*adjust_number) + change for element in range(total_index)]
+	parameter_dict['mu_low'] = [scale*(element*adjust_number) - change for element in range(total_index)]
 
 
-	lamb = [scale_lamb*(element*adjust_number) + change for element in range(int(total_index+1))]
-	mu = [scale_mu*(element*adjust_number) - change for element in range(int(total_index+1))]
+	lamb = [scale*(element*adjust_number) + change for element in range(int(total_index+1))]
+	mu = [scale*(element*adjust_number) - change for element in range(int(total_index+1))]
 	parameter_dict['lamb_up'] = list(reversed(lamb))
 	parameter_dict['mu_up'] = list(reversed(mu))
 
@@ -151,3 +154,5 @@ Wakron_macro={
 Wakron_micro={
 	'IPO': wrkn_2012_IPO_micro,
 }
+
+params = wrkn_2012_IPO_macro()
