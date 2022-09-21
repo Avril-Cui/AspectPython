@@ -19,7 +19,7 @@ def get_index_parameters_1929_roaring_twenties():
 		In this case, an Ornstein–Uhlenbeck process is used to model the index price.
 	'''
 
-	index_price_df = pd.read_csv("./historical_price/index_data/1929_roaring_twenties.csv")
+	index_price_df = pd.read_csv("/Users/xiaokeai/Desktop/AspectBackend/Model/historical_price/index_data/1929_roaring_twenties.csv")
 	index_price = index_price_df["^GSPC"].to_list()
 
 	sampling_price_list = []
@@ -66,7 +66,7 @@ def wrkn_2012_IPO_macro():
 		in respect with the index, the THETA parameter is calculated by taking a weighted average
 		between the company's own theta and the index's theta value.
 	"""
-	comp_price_df = pd.read_csv("./historical_price/WRKN/WRKN_IPO.csv")
+	comp_price_df = pd.read_csv("/Users/xiaokeai/Desktop/AspectBackend/Model/historical_price/WRKN/WRKN_IPO.csv")
 	stock_price = comp_price_df["FB"].to_list()
 	index_params = get_index_parameters_1929_roaring_twenties()
 	index_theta = index_params["theta"]
@@ -101,6 +101,7 @@ def wrkn_2012_IPO_macro():
 
 
 	parameter_dict = {}
+	parameter_dict['original_price'] = stock_price[0]
 	parameter_dict['mu_sde'] = mu_lst
 	parameter_dict['sigma'] = sigma_lst
 	parameter_dict['theta'] = theta_lst

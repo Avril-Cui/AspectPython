@@ -1,7 +1,5 @@
-from get_parameters import event_mapping_dict, Wakron_macro, Wakron_micro
 from typing import Optional
 import numpy as np
-import matplotlib.pyplot as plt 
 from copy import deepcopy
 import time
 import pandas as pd
@@ -22,7 +20,6 @@ class StockSimulator:
 	def __init__(
 		self,  
 		initial_price: float,
-		original_price: float,
 		macro_params: dict,
 		micro_params: object,
 		price_range: Optional[float] = 10,
@@ -36,8 +33,6 @@ class StockSimulator:
 		----------
 		initial_price: float,
 			The initialized-price for the price SDE simulation.
-		original_price: float,
-			The orginal initial price in history.
 		macro_params: dict,
 			Imported from get_paramters.py file, containers the required parameters for specific macro scenario.
 		micro_params: function,
@@ -57,9 +52,9 @@ class StockSimulator:
 			Defines the random seed.
 		"""
 		#price storage
-		self.original_price = original_price
+		self.original_price = macro_params['original_price'] 
 		self.initial_price = initial_price
-		self.price = original_price
+		self.price = macro_params['original_price'] 
 		self.second_price = initial_price
 		self.price_list = []
 		self.second_price_lst = []
@@ -82,6 +77,7 @@ class StockSimulator:
 		self.total_index = int((self.upper-self.lower)//self.minimum_price_unit)
 		self.price_change = 0
 		self.micro_params = micro_params(self.total_index, self.price_change)
+		self.micro_params_function = micro_params
 
 		#preparation for D&B process
 		self.ask_bid_list = self._initial_trading_population()
@@ -191,7 +187,7 @@ class StockSimulator:
 					next_price = self.per_second_price(mu_tmp, sigma)
 				
 				self.price_change = (next_price-self.second_price)/self.second_price
-				self.micro_params = micro_params(self.total_index, self.price_change)
+				self.micro_params = self.micro_params_function(self.total_index, self.price_change)
 				difference = self.micro_params["lamb"]-self.micro_params["mu"]
 
 				self.second_price = next_price + difference
@@ -332,16 +328,3 @@ class StockSimulator:
 				else:
 					continue
 		return ask_bid_list
-
-initial_price = 56.67 #randomly selected value for testing
-original_price = 38.23 #start value for FaceBook IPO event
-macro_params = Wakron_macro["IPO"]()
-micro_params = Wakron_micro["IPO"]
-
-simulator = StockSimulator(initial_price, original_price, macro_params, micro_params)
-second_price_lst = simulator.loop_per_second()
-
-x_value = range(0, len(second_price_lst), 1)
-plt.figure(figsize=(10, 6))
-plt.plot(x_value, second_price_lst, label="Per Second Simulated Price Plot", color="orange", alpha = 0.5, linewidth = 1.5)
-plt.show()
